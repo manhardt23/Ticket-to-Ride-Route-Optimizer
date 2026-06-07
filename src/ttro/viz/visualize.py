@@ -1,7 +1,6 @@
-
-
-import networkx as nx
 import matplotlib.pyplot as plt
+import networkx as nx
+
 
 class Visualize:
     def __init__(self, G, city_positions):
@@ -11,7 +10,6 @@ class Visualize:
     def vis(self, highlight_paths=None):
         plt.figure(figsize=(14, 10))
 
-        # --- Draw the full board faintly ---
         nx.draw(
             self.G,
             self.city_positions,
@@ -23,15 +21,13 @@ class Visualize:
             edge_color="lightgray",
         )
 
-        # --- Highlight chosen paths (but only edges that exist in the graph) ---
         if highlight_paths:
             highlight_edges = []
             for path in highlight_paths:
                 if not path:
                     continue
-                for i in range(len(path) - 1):
-                    u, v = path[i], path[i + 1]
-                    if self.G.has_edge(u, v):  # ✅ only draw if edge exists
+                for u, v in zip(path, path[1:]):
+                    if self.G.has_edge(u, v):
                         highlight_edges.append((u, v))
 
             nx.draw_networkx_edges(
@@ -44,7 +40,7 @@ class Visualize:
             nx.draw_networkx_nodes(
                 self.G,
                 self.city_positions,
-                nodelist=set(sum(highlight_paths, [])),  # flatten all paths
+                nodelist={node for path in highlight_paths for node in path},
                 node_color="lightblue",
                 node_size=600,
             )
