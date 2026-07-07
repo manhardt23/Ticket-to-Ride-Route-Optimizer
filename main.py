@@ -49,5 +49,3 @@ def main(visualize: bool = True) -> None:
 
 if __name__ == "__main__":
     main(visualize="--no-viz" not in sys.argv)
-
-

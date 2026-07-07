@@ -17,3 +17,9 @@ dependencies = [
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.vercel]
+entrypoint = "src.ttro.api.app:app"
+
+[tool.vercel.scripts]
+build = "python scripts/vercel_build.py"
