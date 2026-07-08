@@ -1,3 +1,5 @@
+from typing import Literal
+
 from pydantic import BaseModel
 
 
@@ -21,8 +23,15 @@ class Trip(BaseModel):
     points: int
 
 
+class EdgeClaim(BaseModel):
+    city_a: str
+    city_b: str
+    owner: Literal["self", "opponent"]
+
+
 class SolveRequest(BaseModel):
     trip_ids: list[int] | None = None
+    edge_claims: list[EdgeClaim] = []
     auto: bool = False
     set_size: int = 10
 
@@ -34,5 +43,8 @@ class RouteResult(BaseModel):
 
 class SolveResponse(BaseModel):
     points: int
+    trains_used: int = 0
     routes: list[RouteResult]
     trips: list[list]
+    unreachable: list[int] = []
+    unused_mandatory: list[tuple[str, str]] = []
