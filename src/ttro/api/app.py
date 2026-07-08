@@ -11,6 +11,7 @@ from ttro.solver import Optimizer
 
 from ttro.api.schemas import (
     City,
+    EdgeClaim,
     RouteResult,
     SolveRequest,
     SolveResponse,
@@ -79,28 +80,72 @@ def get_trips() -> list[Trip]:
         ]
 
 
+def _edge_claim_sets(
+    edge_claims: list[EdgeClaim],
+) -> tuple[set[frozenset], set[frozenset]]:
+    blocked = {
+        frozenset((c.city_a, c.city_b)) for c in edge_claims if c.owner == "opponent"
+    }
+    pre_claimed = {
+        frozenset((c.city_a, c.city_b)) for c in edge_claims if c.owner == "self"
+    }
+    return blocked, pre_claimed
+
+
+def _trains_used_for_paths(paths: list[list[str]]) -> int:
+    with BoardRepository() as repo:
+        edges = repo.get_edges()
+    train_cost = {frozenset((a, b)): t for a, b, (_w, t) in edges}
+    used: set[frozenset] = set()
+    for path in paths:
+        for u, v in zip(path, path[1:]):
+            used.add(frozenset((u, v)))
+    return sum(train_cost.get(edge, 0) for edge in used)
+
+
 @app.post("/solve", response_model=SolveResponse)
 def solve(req: SolveRequest) -> SolveResponse:
     optimizer = Optimizer()
 
     if req.auto:
         points, paths, trips = optimizer.max_set_trips(req.set_size)
-    else:
-        if not req.trip_ids:
-            raise HTTPException(400, "Provide trip_ids or set auto=true")
-        with BoardRepository() as repo:
-            by_id = {i: (s, e, p) for (i, s, e, p) in repo.get_trips_with_ids()}
-        missing = [tid for tid in req.trip_ids if tid not in by_id]
-        if missing:
-            raise HTTPException(404, f"Unknown trip ids: {missing}")
-        trips = [by_id[tid] for tid in req.trip_ids]
-        points, paths = optimizer.evaluate_set(trips)
+        routes = [
+            RouteResult(trip=list(trip), path=path)
+            for trip, path in zip(trips, paths)
+        ]
+        return SolveResponse(
+            points=points,
+            trains_used=_trains_used_for_paths(paths),
+            routes=routes,
+            trips=[list(t) for t in trips],
+        )
 
+    if not req.trip_ids:
+        raise HTTPException(400, "Provide trip_ids or set auto=true")
+    with BoardRepository() as repo:
+        by_id = {i: (s, e, p) for (i, s, e, p) in repo.get_trips_with_ids()}
+    missing = [tid for tid in req.trip_ids if tid not in by_id]
+    if missing:
+        raise HTTPException(404, f"Unknown trip ids: {missing}")
+    trips = [by_id[tid] for tid in req.trip_ids]
+
+    blocked, pre_claimed = _edge_claim_sets(req.edge_claims)
+    result = optimizer.evaluate_hand(trips, blocked=blocked, pre_claimed=pre_claimed)
+
+    order = result["order"]
+    ordered_trips = [trips[i] for i in order]
     routes = [
         RouteResult(trip=list(trip), path=path)
-        for trip, path in zip(trips, paths)
+        for trip, path in zip(ordered_trips, result["paths"])
     ]
-    return SolveResponse(points=points, routes=routes, trips=[list(t) for t in trips])
+    return SolveResponse(
+        points=result["points"],
+        trains_used=result["trains_used"],
+        routes=routes,
+        trips=[list(t) for t in ordered_trips],
+        unreachable=[req.trip_ids[i] for i in result["unreachable"]],
+        unused_mandatory=result["unused_mandatory"],
+    )
 
 
 @app.get("/solve/best", response_model=SolveResponse)
@@ -115,6 +160,7 @@ def solve_best() -> SolveResponse:
     ]
     return SolveResponse(
         points=cached["points"],
+        trains_used=_trains_used_for_paths(cached["paths"]),
         routes=routes,
         trips=[list(t) for t in cached["trips"]],
     )
