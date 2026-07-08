@@ -4,6 +4,9 @@
   "functions": {
     "api/index.py": {
       "maxDuration": 300
+    },
+    "backend/index.py": {
+      "maxDuration": 300
     }
   }
 }

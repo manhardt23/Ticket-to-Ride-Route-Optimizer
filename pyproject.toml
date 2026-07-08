@@ -21,7 +21,7 @@ viz = ["matplotlib>=3.7"]
 where = ["src"]
 
 [tool.vercel]
-entrypoint = "api.index:app"
+entrypoint = "backend.index:app"
 
 [tool.vercel.scripts]
 build = "python scripts/vercel_build.py"
