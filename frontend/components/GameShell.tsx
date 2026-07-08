@@ -133,8 +133,8 @@ export function GameShell() {
   }
 
   return (
-    <div className="flex h-screen min-h-0 flex-col bg-slate-950 lg:flex-row">
-      <main className="min-h-0 flex-1 p-4">
+    <div className="flex min-h-screen flex-col bg-slate-950 lg:h-screen lg:flex-row">
+      <main className="min-h-[60vh] flex-1 p-4 lg:min-h-0">
         <MapBoard
           cities={board.cities}
           tracks={board.tracks}

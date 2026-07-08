@@ -44,6 +44,12 @@ export function SolveSummary({ hasTrips, solveResult, solving, solveError }: Sol
             </div>
           </dl>
 
+          {solveResult.routes.length > 0 && (
+            <p className="mt-3 text-xs text-slate-500">
+              Solid = new track this turn · dashed = reused track (free)
+            </p>
+          )}
+
           {hasWarnings && (
             <ul className="mt-3 space-y-1.5 text-xs text-amber-400">
               {overTrainLimit && <li>⚠ Over the {TOTAL_TRAINS}-train limit.</li>}

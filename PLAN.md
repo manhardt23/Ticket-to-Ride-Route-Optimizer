@@ -3,7 +3,7 @@
 Phased plan for an interactive web app: visual board map, edge ownership (yours vs
 opponent), incremental trip planning, and auto-rerouting that maximizes points.
 
-**Status:** Decisions locked — ready for Phase 1 implementation
+**Status:** All phases (1–6) complete
 
 ---
 
@@ -249,9 +249,9 @@ class SolveResponse(BaseModel):
 - [x] Draw routes; show warnings in sidebar
 
 ### Phase 6 — Polish
-- [ ] New vs reused track styling on routes
+- [x] New vs reused track styling on routes
 - [x] Loading state; `localStorage` for trip hand
-- [ ] README deploy section; responsive layout
+- [x] README deploy section; responsive layout
 
 ---
 
