@@ -1,4 +1,4 @@
-import type { BoardData, City, Track, Trip } from "./types";
+import type { BoardData, City, EdgeClaimPayload, SolveResponse, Track, Trip } from "./types";
 import { STATIC_BOARD } from "./staticBoard";
 import { STATIC_TRIPS } from "./staticTrips";
 
@@ -45,4 +45,20 @@ export async function loadTrips(): Promise<{
   } catch {
     return { trips: STATIC_TRIPS, source: "static" };
   }
+}
+
+export async function solveHand(
+  tripIds: number[],
+  edgeClaims: EdgeClaimPayload[],
+  signal?: AbortSignal,
+): Promise<SolveResponse> {
+  const res = await fetch(`${API_BASE}/solve`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ trip_ids: tripIds, edge_claims: edgeClaims }),
+    cache: "no-store",
+    signal,
+  });
+  if (!res.ok) throw new Error(`/solve returned ${res.status}`);
+  return res.json() as Promise<SolveResponse>;
 }
