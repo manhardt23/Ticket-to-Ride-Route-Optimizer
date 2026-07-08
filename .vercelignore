@@ -1,0 +1,6 @@
+# Built on Vercel — do not upload stale local artifacts
+public
+frontend/out
+frontend/.next
+frontend/node_modules
+data/*.db
