@@ -22,3 +22,8 @@ export type BoardData = {
   cities: City[];
   tracks: Track[];
 };
+
+export type EdgeOwner = "self" | "opponent";
+
+/** Canonical edge key (sorted city names) → owner. Absent = unclaimed. */
+export type EdgeClaims = Record<string, EdgeOwner>;
