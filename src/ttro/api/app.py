@@ -3,6 +3,7 @@ from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 
 from ttro.db import BoardRepository
 from ttro.db.connection import DEFAULT_DB_PATH
@@ -117,3 +118,26 @@ def solve_best() -> SolveResponse:
         routes=routes,
         trips=[list(t) for t in cached["trips"]],
     )
+
+
+_PUBLIC_DIR = Path(__file__).resolve().parents[3] / "public"
+
+
+def _register_static_frontend() -> None:
+    """Serve Next.js export from public/ when Vercel CDN does not (FastAPI framework mode)."""
+    if not _PUBLIC_DIR.is_dir():
+        return
+
+    @app.get("/", include_in_schema=False)
+    def serve_root() -> FileResponse:
+        return FileResponse(_PUBLIC_DIR / "index.html")
+
+    @app.get("/{full_path:path}", include_in_schema=False)
+    def serve_static(full_path: str) -> FileResponse:
+        target = _PUBLIC_DIR / full_path
+        if target.is_file():
+            return FileResponse(target)
+        return FileResponse(_PUBLIC_DIR / "index.html")
+
+
+_register_static_frontend()
