@@ -1,5 +1,5 @@
 import { edgeKey } from "./coords";
-import type { EdgeClaims, EdgeOwner } from "./types";
+import type { EdgeClaimPayload, EdgeClaims, EdgeOwner } from "./types";
 
 const STORAGE_KEY = "ttro-edge-claims";
 const TRIP_HAND_KEY = "ttro-trip-hand";
@@ -57,6 +57,13 @@ export function setEdgeClaim(
     delete next[key];
   }
   return next;
+}
+
+export function edgeClaimsToPayload(claims: EdgeClaims): EdgeClaimPayload[] {
+  return Object.entries(claims).map(([key, owner]) => {
+    const [city_a, city_b] = key.split("|");
+    return { city_a, city_b, owner };
+  });
 }
 
 export function countEdgeClaims(claims: EdgeClaims): { self: number; opponent: number } {

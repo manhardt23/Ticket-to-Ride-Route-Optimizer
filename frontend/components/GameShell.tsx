@@ -1,20 +1,23 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { checkApiHealth, loadBoardData, loadTrips } from "@/lib/api";
+import { checkApiHealth, loadBoardData, loadTrips, solveHand } from "@/lib/api";
 import {
   addTripToHand,
   clearEdgeClaims,
   countEdgeClaims,
+  edgeClaimsToPayload,
   loadEdgeClaims,
   loadTripHand,
   removeTripFromHand,
   saveEdgeClaims,
   saveTripHand,
 } from "@/lib/gameState";
-import type { BoardData, EdgeClaims, Trip } from "@/lib/types";
+import type { BoardData, EdgeClaims, SolveResponse, Trip } from "@/lib/types";
 import { MapBoard } from "./MapBoard";
 import { Sidebar } from "./Sidebar";
+
+const SOLVE_DEBOUNCE_MS = 300;
 
 export function GameShell() {
   const [board, setBoard] = useState<BoardData | null>(null);
@@ -24,6 +27,9 @@ export function GameShell() {
   const [loading, setLoading] = useState(true);
   const [edgeClaims, setEdgeClaims] = useState<EdgeClaims>({});
   const [selectedTripIds, setSelectedTripIds] = useState<number[]>([]);
+  const [solveResult, setSolveResult] = useState<SolveResponse | null>(null);
+  const [solving, setSolving] = useState(false);
+  const [solveError, setSolveError] = useState<string | null>(null);
 
   useEffect(() => {
     setEdgeClaims(loadEdgeClaims());
@@ -52,6 +58,36 @@ export function GameShell() {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    if (selectedTripIds.length === 0) {
+      setSolveResult(null);
+      setSolveError(null);
+      setSolving(false);
+      return;
+    }
+
+    const controller = new AbortController();
+    setSolving(true);
+    const timer = setTimeout(() => {
+      solveHand(selectedTripIds, edgeClaimsToPayload(edgeClaims), controller.signal)
+        .then((result) => {
+          setSolveResult(result);
+          setSolveError(null);
+        })
+        .catch((err: unknown) => {
+          if (err instanceof DOMException && err.name === "AbortError") return;
+          setSolveResult(null);
+          setSolveError(err instanceof Error ? err.message : "Solve failed");
+        })
+        .finally(() => setSolving(false));
+    }, SOLVE_DEBOUNCE_MS);
+
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [selectedTripIds, edgeClaims]);
 
   function handleEdgeClaimsChange(claims: EdgeClaims) {
     setEdgeClaims(claims);
@@ -104,6 +140,7 @@ export function GameShell() {
           tracks={board.tracks}
           edgeClaims={edgeClaims}
           onEdgeClaimsChange={handleEdgeClaimsChange}
+          routes={solveResult?.routes ?? []}
         />
       </main>
       <Sidebar
@@ -118,6 +155,9 @@ export function GameShell() {
         selectedTripIds={selectedTripIds}
         onAddTrip={handleAddTrip}
         onRemoveTrip={handleRemoveTrip}
+        solveResult={solveResult}
+        solving={solving}
+        solveError={solveError}
       />
     </div>
   );

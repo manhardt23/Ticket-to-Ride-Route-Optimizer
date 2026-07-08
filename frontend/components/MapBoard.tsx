@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { edgeKey, getViewBox, layoutCities } from "@/lib/coords";
 import { cycleEdgeOwner } from "@/lib/gameState";
-import type { City, EdgeClaims, EdgeOwner, Track } from "@/lib/types";
+import type { City, EdgeClaims, EdgeOwner, RouteResult, Track } from "@/lib/types";
 
 type HoverEdge = Track & { key: string };
 type HoverCity = City;
@@ -13,6 +13,7 @@ type MapBoardProps = {
   tracks: Track[];
   edgeClaims: EdgeClaims;
   onEdgeClaimsChange: (claims: EdgeClaims) => void;
+  routes: RouteResult[];
 };
 
 const EDGE_COLORS = {
@@ -21,6 +22,19 @@ const EDGE_COLORS = {
   opponent: "#ef4444",
   hover: "#38bdf8",
 } as const;
+
+const ROUTE_COLORS = [
+  "#facc15",
+  "#34d399",
+  "#c084fc",
+  "#f472b6",
+  "#22d3ee",
+  "#fb923c",
+  "#a3e635",
+  "#f87171",
+  "#818cf8",
+  "#2dd4bf",
+];
 
 function edgeStroke(
   owner: EdgeOwner | undefined,
@@ -43,6 +57,7 @@ export function MapBoard({
   tracks,
   edgeClaims,
   onEdgeClaimsChange,
+  routes,
 }: MapBoardProps) {
   const positions = useMemo(() => layoutCities(cities), [cities]);
   const [hoverEdge, setHoverEdge] = useState<HoverEdge | null>(null);
@@ -103,6 +118,34 @@ export function MapBoard({
                 strokeLinecap="round"
                 pointerEvents="none"
               />
+            </g>
+          );
+        })}
+
+        {routes.map((route, routeIndex) => {
+          if (route.path.length < 2) return null;
+          const color = ROUTE_COLORS[routeIndex % ROUTE_COLORS.length];
+          return (
+            <g key={`route-${routeIndex}`} opacity={0.85}>
+              {route.path.slice(0, -1).map((city, segmentIndex) => {
+                const next = route.path[segmentIndex + 1];
+                const a = positions.get(city);
+                const b = positions.get(next);
+                if (!a || !b) return null;
+                return (
+                  <line
+                    key={`${city}-${next}`}
+                    x1={a.x}
+                    y1={a.y}
+                    x2={b.x}
+                    y2={b.y}
+                    stroke={color}
+                    strokeWidth={5}
+                    strokeLinecap="round"
+                    pointerEvents="none"
+                  />
+                );
+              })}
             </g>
           );
         })}

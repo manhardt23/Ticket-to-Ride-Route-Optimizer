@@ -245,8 +245,8 @@ class SolveResponse(BaseModel):
 
 ### Phase 5 — Trip hand + auto-solve
 - [x] `TripPicker` + `TripHand` (incremental, max 10)
-- [ ] Auto-solve on trip or edge change
-- [ ] Draw routes; show warnings in sidebar
+- [x] Auto-solve on trip or edge change
+- [x] Draw routes; show warnings in sidebar
 
 ### Phase 6 — Polish
 - [ ] New vs reused track styling on routes
