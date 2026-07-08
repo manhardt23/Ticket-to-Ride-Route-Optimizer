@@ -63,6 +63,24 @@ export function MapBoard({
   const [hoverEdge, setHoverEdge] = useState<HoverEdge | null>(null);
   const [hoverCity, setHoverCity] = useState<HoverCity | null>(null);
 
+  // Track free (already-claimed) track across routes in routing order, so later
+  // tickets sharing earlier track render as "reused" instead of newly placed.
+  const routeSegments = useMemo(() => {
+    const claimed = new Set<string>();
+    for (const [key, owner] of Object.entries(edgeClaims)) {
+      if (owner === "self") claimed.add(key);
+    }
+    return routes.map((route) =>
+      route.path.slice(0, -1).map((city, i) => {
+        const next = route.path[i + 1];
+        const key = edgeKey(city, next);
+        const isNew = !claimed.has(key);
+        claimed.add(key);
+        return { city, next, key, isNew };
+      }),
+    );
+  }, [routes, edgeClaims]);
+
   function handleEdgeClick(track: Track) {
     const key = edgeKey(track.city_a, track.city_b);
     const nextOwner = cycleEdgeOwner(edgeClaims[key]);
@@ -122,25 +140,25 @@ export function MapBoard({
           );
         })}
 
-        {routes.map((route, routeIndex) => {
-          if (route.path.length < 2) return null;
+        {routeSegments.map((segments, routeIndex) => {
+          if (segments.length === 0) return null;
           const color = ROUTE_COLORS[routeIndex % ROUTE_COLORS.length];
           return (
             <g key={`route-${routeIndex}`} opacity={0.85}>
-              {route.path.slice(0, -1).map((city, segmentIndex) => {
-                const next = route.path[segmentIndex + 1];
+              {segments.map(({ city, next, key, isNew }) => {
                 const a = positions.get(city);
                 const b = positions.get(next);
                 if (!a || !b) return null;
                 return (
                   <line
-                    key={`${city}-${next}`}
+                    key={key}
                     x1={a.x}
                     y1={a.y}
                     x2={b.x}
                     y2={b.y}
                     stroke={color}
-                    strokeWidth={5}
+                    strokeWidth={isNew ? 5 : 4}
+                    strokeDasharray={isNew ? undefined : "2 5"}
                     strokeLinecap="round"
                     pointerEvents="none"
                   />

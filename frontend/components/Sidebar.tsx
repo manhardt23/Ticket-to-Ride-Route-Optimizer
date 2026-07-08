@@ -38,7 +38,7 @@ export function Sidebar({
   solveError,
 }: SidebarProps) {
   return (
-    <aside className="flex w-80 shrink-0 flex-col gap-4 overflow-y-auto border-l border-slate-800 bg-slate-950 p-5 min-h-0">
+    <aside className="flex w-full shrink-0 flex-col gap-4 overflow-y-auto border-t border-slate-800 bg-slate-950 p-5 min-h-0 lg:w-80 lg:border-l lg:border-t-0">
       <header>
         <h1 className="text-lg font-semibold text-slate-100">Route Planner</h1>
         <p className="mt-1 text-sm text-slate-400">

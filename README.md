@@ -140,11 +140,42 @@ This project demonstrates:
 ✅ **Problem Solving**: Translated complex game rules into algorithmic constraints  
 ✅ **Visualization**: Created intuitive visual outputs for complex data
 
+## 🌐 Web App
+
+An interactive planner lives in `frontend/` (Next.js) backed by the FastAPI service
+in `src/ttro/api`. Click the map to claim track for yourself or an opponent, add
+tickets from your hand, and routes auto-solve around your claims — see `PLAN.md`
+for the full design.
+
+### Local development
+
+```bash
+pip install -e .
+python scripts/seed_db.py          # one-time: build data/board.db from data/archive/
+python -m uvicorn ttro.api.app:app --app-dir src --reload   # http://127.0.0.1:8000
+
+cd frontend
+npm install
+npm run dev                        # http://localhost:3000 (proxies /solve, /cities, etc. to the API)
+```
+
+### Deploying to Vercel
+
+The repo deploys as a **single Vercel project** — Next.js is exported to static
+files and served by the same FastAPI function that answers `/cities`, `/trips`,
+and `/solve`.
+
+1. Import the repo into Vercel; leave **Root Directory** blank (repo root, not `frontend`)
+2. Framework Preset: **Other** (Vercel auto-detects the FastAPI entrypoint via `vercel.json`)
+3. Push to `main` — `scripts/vercel_build.py` builds the frontend and bundles it for
+   `api/index.py` to serve
+4. No environment variables are required for a same-domain deploy
+
 ## 🔮 Future Enhancements
 
 - [ ]  Fix visualization to accurately render paths without edge disconnects
 - [ ]  Implement reinforcement learning agent for real-time competitive play
-- [ ]  Web interface for interactive route planning
+- [x]  Web interface for interactive route planning
 
 ## 📝 License
 
