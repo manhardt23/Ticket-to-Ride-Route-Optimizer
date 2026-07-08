@@ -238,10 +238,10 @@ class SolveResponse(BaseModel):
 - [x] Clear-all; `localStorage` for edge claims
 
 ### Phase 4 — Backend solver
-- [ ] `RouteSet`: `blocked` + `pre_claimed` sets
-- [ ] Sort trips by points descending
-- [ ] `unused_mandatory` validation
-- [ ] `SolveRequest.edge_claims` API
+- [x] `RouteSet`: `blocked` + `pre_claimed` sets
+- [x] Sort trips by points descending
+- [x] `unused_mandatory` validation
+- [x] `SolveRequest.edge_claims` API
 
 ### Phase 5 — Trip hand + auto-solve
 - [x] `TripPicker` + `TripHand` (incremental, max 10)
