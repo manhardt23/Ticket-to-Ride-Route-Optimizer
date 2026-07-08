@@ -19,6 +19,10 @@ env/
 data/*.db
 results.json
 
+# Next.js static export (built in CI / Vercel)
+public/*
+!public/.gitkeep
+
 # Editor / OS
 .DS_Store
 .idea/

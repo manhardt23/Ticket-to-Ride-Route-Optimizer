@@ -14,8 +14,9 @@ const API_PATHS = [
 ];
 
 const nextConfig: NextConfig = {
+  output: "export",
+  images: { unoptimized: true },
   async rewrites() {
-    // Local dev only — production uses Vercel Services on the same domain.
     if (process.env.NODE_ENV !== "development") return [];
     return API_PATHS.map((path) => ({
       source: path,

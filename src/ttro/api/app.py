@@ -1,7 +1,11 @@
+from contextlib import asynccontextmanager
+from pathlib import Path
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from ttro.db import BoardRepository
+from ttro.db.connection import DEFAULT_DB_PATH
 from ttro.solver import Optimizer
 
 from ttro.api.schemas import (
@@ -13,7 +17,28 @@ from ttro.api.schemas import (
     Trip,
 )
 
-app = FastAPI(title="Ticket to Ride Optimizer", version="0.2.0")
+
+def _ensure_board_db() -> None:
+    if DEFAULT_DB_PATH.exists():
+        return
+    import importlib.util
+
+    root = Path(__file__).resolve().parents[3]
+    spec = importlib.util.spec_from_file_location(
+        "seed_db", root / "scripts" / "seed_db.py"
+    )
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    module.seed()
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    _ensure_board_db()
+    yield
+
+
+app = FastAPI(title="Ticket to Ride Optimizer", version="0.2.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,

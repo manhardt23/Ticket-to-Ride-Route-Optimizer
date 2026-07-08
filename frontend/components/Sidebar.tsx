@@ -65,8 +65,8 @@ export function Sidebar({
         </p>
         {!apiOnline && (
           <p className="mt-3 text-xs text-amber-500/90">
-            API unreachable. Use one Vercel project with repo root (blank) and
-            redeploy so map and API share the same domain.
+            API unreachable on this domain. Redeploy from repo root (blank Root
+            Directory) so FastAPI and the static map share one URL.
           </p>
         )}
       </section>

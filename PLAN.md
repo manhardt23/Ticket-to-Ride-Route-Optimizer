@@ -257,14 +257,15 @@ class SolveResponse(BaseModel):
 
 ## Vercel setup (one project)
 
-1. [vercel.com](https://vercel.com) → **one** project linked to this repo
-2. **Settings → General → Root Directory** → leave **blank** (repo root)
-3. Delete any second project that only deploys `frontend/`
-4. Remove `API_URL` env var if set (not needed — same domain)
-5. Push latest `main` and redeploy
+1. **One** Vercel project linked to this repo
+2. **Settings → General → Root Directory** → **blank** (repo root, NOT `frontend`)
+3. **Settings → Build → Framework Preset** → **Other** or auto-detected FastAPI
+   (do NOT use "Services" or set root to `frontend`)
+4. Remove `API_URL` env var if set
+5. Push `main` and redeploy
 
-`vercel.json` uses **Vercel Services**: `frontend/` serves the map, repo root
-serves FastAPI. Same URL for both (`/health`, `/cities`, `/`).
+Build exports Next.js to `public/`; FastAPI serves `/health`, `/cities`, etc. on
+the **same domain** as the map (`/`).
 
 ---
 
