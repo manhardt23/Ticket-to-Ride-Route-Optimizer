@@ -39,3 +39,7 @@ export function layoutCities(cities: City[]): Map<string, { x: number; y: number
 export function edgeKey(a: string, b: string): string {
   return [a, b].sort().join("|");
 }
+
+export function formatCity(name: string): string {
+  return name.replace(/-/g, " ");
+}

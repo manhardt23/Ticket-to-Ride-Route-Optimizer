@@ -244,13 +244,13 @@ class SolveResponse(BaseModel):
 - [ ] `SolveRequest.edge_claims` API
 
 ### Phase 5 — Trip hand + auto-solve
-- [ ] `TripPicker` + `TripHand` (incremental, max 10)
+- [x] `TripPicker` + `TripHand` (incremental, max 10)
 - [ ] Auto-solve on trip or edge change
 - [ ] Draw routes; show warnings in sidebar
 
 ### Phase 6 — Polish
 - [ ] New vs reused track styling on routes
-- [ ] Loading state; `localStorage` for trip hand
+- [x] Loading state; `localStorage` for trip hand
 - [ ] README deploy section; responsive layout
 
 ---

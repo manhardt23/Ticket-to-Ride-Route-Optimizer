@@ -1,40 +1,49 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { checkApiHealth, loadBoardData } from "@/lib/api";
+import { checkApiHealth, loadBoardData, loadTrips } from "@/lib/api";
 import {
+  addTripToHand,
   clearEdgeClaims,
   countEdgeClaims,
   loadEdgeClaims,
+  loadTripHand,
+  removeTripFromHand,
   saveEdgeClaims,
+  saveTripHand,
 } from "@/lib/gameState";
-import type { BoardData, EdgeClaims } from "@/lib/types";
+import type { BoardData, EdgeClaims, Trip } from "@/lib/types";
 import { MapBoard } from "./MapBoard";
 import { Sidebar } from "./Sidebar";
 
 export function GameShell() {
   const [board, setBoard] = useState<BoardData | null>(null);
+  const [trips, setTrips] = useState<Trip[]>([]);
   const [dataSource, setDataSource] = useState<"api" | "static">("static");
   const [apiOnline, setApiOnline] = useState(false);
   const [loading, setLoading] = useState(true);
   const [edgeClaims, setEdgeClaims] = useState<EdgeClaims>({});
+  const [selectedTripIds, setSelectedTripIds] = useState<number[]>([]);
 
   useEffect(() => {
     setEdgeClaims(loadEdgeClaims());
+    setSelectedTripIds(loadTripHand());
   }, []);
 
   useEffect(() => {
     let cancelled = false;
 
     async function init() {
-      const [health, boardResult] = await Promise.all([
+      const [health, boardResult, tripsResult] = await Promise.all([
         checkApiHealth(),
         loadBoardData(),
+        loadTrips(),
       ]);
       if (cancelled) return;
       setApiOnline(health);
       setBoard(boardResult.data);
-      setDataSource(boardResult.source);
+      setTrips(tripsResult.trips);
+      setDataSource(boardResult.source === "api" && tripsResult.source === "api" ? "api" : "static");
       setLoading(false);
     }
 
@@ -51,6 +60,22 @@ export function GameShell() {
 
   function handleClearClaims() {
     handleEdgeClaimsChange(clearEdgeClaims());
+  }
+
+  function handleAddTrip(tripId: number) {
+    setSelectedTripIds((prev) => {
+      const next = addTripToHand(prev, tripId);
+      saveTripHand(next);
+      return next;
+    });
+  }
+
+  function handleRemoveTrip(tripId: number) {
+    setSelectedTripIds((prev) => {
+      const next = removeTripFromHand(prev, tripId);
+      saveTripHand(next);
+      return next;
+    });
   }
 
   const claimCounts = countEdgeClaims(edgeClaims);
@@ -89,6 +114,10 @@ export function GameShell() {
         selfClaimCount={claimCounts.self}
         opponentClaimCount={claimCounts.opponent}
         onClearClaims={handleClearClaims}
+        trips={trips}
+        selectedTripIds={selectedTripIds}
+        onAddTrip={handleAddTrip}
+        onRemoveTrip={handleRemoveTrip}
       />
     </div>
   );
