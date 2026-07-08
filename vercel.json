@@ -8,11 +8,11 @@
     "backend": {
       "root": ".",
       "framework": "fastapi",
-      "entrypoint": "api.index:app",
+      "entrypoint": "backend.index:app",
       "installCommand": "pip install -e .",
       "buildCommand": "python scripts/vercel_build.py",
       "functions": {
-        "api/index.py": {
+        "backend/index.py": {
           "maxDuration": 300
         }
       }
