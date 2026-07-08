@@ -1,8 +1,13 @@
+import { EdgeLegend } from "./EdgeLegend";
+
 type SidebarProps = {
   apiOnline: boolean;
   dataSource: "api" | "static";
   cityCount: number;
   trackCount: number;
+  selfClaimCount: number;
+  opponentClaimCount: number;
+  onClearClaims: () => void;
 };
 
 export function Sidebar({
@@ -10,6 +15,9 @@ export function Sidebar({
   dataSource,
   cityCount,
   trackCount,
+  selfClaimCount,
+  opponentClaimCount,
+  onClearClaims,
 }: SidebarProps) {
   return (
     <aside className="flex w-80 shrink-0 flex-col gap-6 border-l border-slate-800 bg-slate-950 p-5">
@@ -44,25 +52,6 @@ export function Sidebar({
             <dd className="text-slate-200">{trackCount}</dd>
           </div>
         </dl>
-      </section>
-
-      <section className="rounded-lg border border-slate-800 bg-slate-900/50 p-4">
-        <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-          Legend
-        </h2>
-        <ul className="mt-3 space-y-2 text-sm text-slate-300">
-          <li className="flex items-center gap-2">
-            <span className="h-0.5 w-8 rounded bg-slate-500" />
-            Unclaimed route
-          </li>
-          <li className="flex items-center gap-2">
-            <span className="h-1 w-8 rounded bg-sky-400" />
-            Hover / highlight
-          </li>
-        </ul>
-        <p className="mt-4 text-xs text-slate-500">
-          Click-to-claim edges and trip hand coming in the next phase.
-        </p>
         {!apiOnline && (
           <p className="mt-3 text-xs text-amber-500/90">
             API unreachable on this domain. Redeploy from repo root (blank Root
@@ -70,6 +59,12 @@ export function Sidebar({
           </p>
         )}
       </section>
+
+      <EdgeLegend
+        selfCount={selfClaimCount}
+        opponentCount={opponentClaimCount}
+        onClearAll={onClearClaims}
+      />
 
       <section className="mt-auto rounded-lg border border-dashed border-slate-700 p-4">
         <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500">

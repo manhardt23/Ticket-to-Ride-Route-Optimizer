@@ -1,8 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { City, Track } from "@/lib/types";
 import { edgeKey, getViewBox, layoutCities } from "@/lib/coords";
+import { cycleEdgeOwner } from "@/lib/gameState";
+import type { City, EdgeClaims, EdgeOwner, Track } from "@/lib/types";
 
 type HoverEdge = Track & { key: string };
 type HoverCity = City;
@@ -10,12 +11,54 @@ type HoverCity = City;
 type MapBoardProps = {
   cities: City[];
   tracks: Track[];
+  edgeClaims: EdgeClaims;
+  onEdgeClaimsChange: (claims: EdgeClaims) => void;
 };
 
-export function MapBoard({ cities, tracks }: MapBoardProps) {
+const EDGE_COLORS = {
+  unclaimed: "#3d4f5f",
+  self: "#3b82f6",
+  opponent: "#ef4444",
+  hover: "#38bdf8",
+} as const;
+
+function edgeStroke(
+  owner: EdgeOwner | undefined,
+  hovered: boolean,
+): { color: string; width: number } {
+  if (owner === "self") return { color: EDGE_COLORS.self, width: 4 };
+  if (owner === "opponent") return { color: EDGE_COLORS.opponent, width: 4 };
+  if (hovered) return { color: EDGE_COLORS.hover, width: 4 };
+  return { color: EDGE_COLORS.unclaimed, width: 2.5 };
+}
+
+function ownerLabel(owner: EdgeOwner | undefined): string {
+  if (owner === "self") return "Yours";
+  if (owner === "opponent") return "Opponent";
+  return "Unclaimed";
+}
+
+export function MapBoard({
+  cities,
+  tracks,
+  edgeClaims,
+  onEdgeClaimsChange,
+}: MapBoardProps) {
   const positions = useMemo(() => layoutCities(cities), [cities]);
   const [hoverEdge, setHoverEdge] = useState<HoverEdge | null>(null);
   const [hoverCity, setHoverCity] = useState<HoverCity | null>(null);
+
+  function handleEdgeClick(track: Track) {
+    const key = edgeKey(track.city_a, track.city_b);
+    const nextOwner = cycleEdgeOwner(edgeClaims[key]);
+    const next = { ...edgeClaims };
+    if (nextOwner) {
+      next[key] = nextOwner;
+    } else {
+      delete next[key];
+    }
+    onEdgeClaimsChange(next);
+  }
 
   return (
     <div className="relative h-full w-full">
@@ -32,7 +75,9 @@ export function MapBoard({ cities, tracks }: MapBoardProps) {
           const b = positions.get(track.city_b);
           if (!a || !b) return null;
           const key = edgeKey(track.city_a, track.city_b);
-          const active = hoverEdge?.key === key;
+          const owner = edgeClaims[key];
+          const hovered = hoverEdge?.key === key;
+          const { color, width } = edgeStroke(owner, hovered);
 
           return (
             <g key={key}>
@@ -43,16 +88,18 @@ export function MapBoard({ cities, tracks }: MapBoardProps) {
                 y2={b.y}
                 stroke="transparent"
                 strokeWidth={16}
+                className="cursor-pointer"
                 onMouseEnter={() => setHoverEdge({ ...track, key })}
                 onMouseLeave={() => setHoverEdge((h) => (h?.key === key ? null : h))}
+                onClick={() => handleEdgeClick(track)}
               />
               <line
                 x1={a.x}
                 y1={a.y}
                 x2={b.x}
                 y2={b.y}
-                stroke={active ? "#38bdf8" : "#3d4f5f"}
-                strokeWidth={active ? 4 : 2.5}
+                stroke={color}
+                strokeWidth={width}
                 strokeLinecap="round"
                 pointerEvents="none"
               />
@@ -106,6 +153,7 @@ export function MapBoard({ cities, tracks }: MapBoardProps) {
               <p className="text-slate-400">
                 {hoverEdge.train_cost} trains · {hoverEdge.route_points} route pts
               </p>
+              <p className="text-slate-500">{ownerLabel(edgeClaims[hoverEdge.key])}</p>
             </>
           )}
           {hoverCity && !hoverEdge && (

@@ -233,9 +233,9 @@ class SolveResponse(BaseModel):
 - [ ] Map + sidebar layout
 
 ### Phase 3 — Edge ownership (map)
-- [ ] Click cycle: unclaimed → self → opponent → unclaimed
-- [ ] `EdgeLegend` component
-- [ ] Clear-all; `localStorage` for edge claims
+- [x] Click cycle: unclaimed → self → opponent → unclaimed
+- [x] `EdgeLegend` component
+- [x] Clear-all; `localStorage` for edge claims
 
 ### Phase 4 — Backend solver
 - [ ] `RouteSet`: `blocked` + `pre_claimed` sets
