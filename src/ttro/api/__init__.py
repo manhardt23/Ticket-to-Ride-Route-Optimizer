@@ -1,3 +1,1 @@
-from .app import app
-
-__all__ = ["app"]
+"""FastAPI package. Vercel entrypoint: src.ttro.api.app:app"""
