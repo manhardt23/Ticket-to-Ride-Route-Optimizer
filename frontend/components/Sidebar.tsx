@@ -63,6 +63,12 @@ export function Sidebar({
         <p className="mt-4 text-xs text-slate-500">
           Click-to-claim edges and trip hand coming in the next phase.
         </p>
+        {!apiOnline && (
+          <p className="mt-3 text-xs text-amber-500/90">
+            Set <code className="text-amber-400">API_URL</code> in Vercel env vars
+            to your FastAPI deployment URL, then redeploy.
+          </p>
+        )}
       </section>
 
       <section className="mt-auto rounded-lg border border-dashed border-slate-700 p-4">

@@ -1,7 +1,8 @@
 import type { BoardData, City, Track } from "./types";
 import { STATIC_BOARD } from "./staticBoard";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "";
+/** Empty = same-origin (via Next.js rewrites). Set NEXT_PUBLIC_API_URL for direct calls. */
+const API_BASE = (process.env.NEXT_PUBLIC_API_URL ?? "").replace(/\/$/, "");
 
 async function fetchJson<T>(path: string): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, { cache: "no-store" });

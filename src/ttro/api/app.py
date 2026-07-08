@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 
 from ttro.db import BoardRepository
 from ttro.solver import Optimizer
@@ -13,6 +14,13 @@ from ttro.api.schemas import (
 )
 
 app = FastAPI(title="Ticket to Ride Optimizer", version="0.2.0")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.get("/health")
