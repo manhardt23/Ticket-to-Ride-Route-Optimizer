@@ -13,21 +13,13 @@ const API_PATHS = [
   "/openapi.json",
 ];
 
-function resolveApiBase(): string | null {
-  const configured =
-    process.env.API_URL ?? process.env.NEXT_PUBLIC_API_URL ?? null;
-  if (configured) return configured.replace(/\/$/, "");
-  if (process.env.NODE_ENV === "development") return API_DEV;
-  return null;
-}
-
 const nextConfig: NextConfig = {
   async rewrites() {
-    const apiBase = resolveApiBase();
-    if (!apiBase) return [];
+    // Local dev only — production uses Vercel Services on the same domain.
+    if (process.env.NODE_ENV !== "development") return [];
     return API_PATHS.map((path) => ({
       source: path,
-      destination: `${apiBase}${path}`,
+      destination: `${API_DEV}${path}`,
     }));
   },
 };

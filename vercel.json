@@ -1,8 +1,32 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "functions": {
-    "api/index.py": {
-      "maxDuration": 300
+  "services": {
+    "frontend": {
+      "root": "frontend",
+      "framework": "nextjs"
+    },
+    "backend": {
+      "root": ".",
+      "framework": "fastapi",
+      "entrypoint": "api.index:app",
+      "installCommand": "pip install -e .",
+      "buildCommand": "python scripts/vercel_build.py",
+      "functions": {
+        "api/index.py": {
+          "maxDuration": 300
+        }
+      }
     }
-  }
+  },
+  "rewrites": [
+    { "source": "/health", "destination": { "service": "backend" } },
+    { "source": "/cities", "destination": { "service": "backend" } },
+    { "source": "/tracks", "destination": { "service": "backend" } },
+    { "source": "/trips", "destination": { "service": "backend" } },
+    { "source": "/solve/best", "destination": { "service": "backend" } },
+    { "source": "/solve", "destination": { "service": "backend" } },
+    { "source": "/docs", "destination": { "service": "backend" } },
+    { "source": "/openapi.json", "destination": { "service": "backend" } },
+    { "source": "/(.*)", "destination": { "service": "frontend" } }
+  ]
 }

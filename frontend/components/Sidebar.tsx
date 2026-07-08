@@ -65,8 +65,8 @@ export function Sidebar({
         </p>
         {!apiOnline && (
           <p className="mt-3 text-xs text-amber-500/90">
-            Set <code className="text-amber-400">API_URL</code> in Vercel env vars
-            to your FastAPI deployment URL, then redeploy.
+            API unreachable. Use one Vercel project with repo root (blank) and
+            redeploy so map and API share the same domain.
           </p>
         )}
       </section>
