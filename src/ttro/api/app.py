@@ -120,7 +120,9 @@ def solve_best() -> SolveResponse:
     )
 
 
-_PUBLIC_DIR = Path(__file__).resolve().parents[3] / "public"
+_PUBLIC_DIR = Path(__file__).resolve().parent / "static_site"
+if not _PUBLIC_DIR.is_dir():
+    _PUBLIC_DIR = Path(__file__).resolve().parents[3] / "public"
 
 
 def _register_static_frontend() -> None:

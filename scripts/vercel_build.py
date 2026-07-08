@@ -9,6 +9,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 FRONTEND_DIR = PROJECT_ROOT / "frontend"
 FRONTEND_OUT = FRONTEND_DIR / "out"
 PUBLIC_DIR = PROJECT_ROOT / "public"
+STATIC_SITE_DIR = PROJECT_ROOT / "src" / "ttro" / "static_site"
 
 
 def main() -> None:
@@ -33,7 +34,13 @@ def main() -> None:
         shutil.rmtree(PUBLIC_DIR)
     shutil.copytree(FRONTEND_OUT, PUBLIC_DIR)
 
-    print("Vercel build: board.db seeded, frontend copied to public/")
+    if STATIC_SITE_DIR.exists():
+        shutil.rmtree(STATIC_SITE_DIR)
+    shutil.copytree(FRONTEND_OUT, STATIC_SITE_DIR)
+
+    print(
+        "Vercel build: board.db seeded, frontend copied to public/ and static_site/"
+    )
 
 
 if __name__ == "__main__":

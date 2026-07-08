@@ -22,8 +22,12 @@ results.json
 # Next.js static export (built in CI / Vercel)
 public/*
 !public/.gitkeep
+src/ttro/static_site/*
+!src/ttro/static_site/.gitkeep
 
 # Editor / OS
 .DS_Store
 .idea/
 .vscode/
+.vercel
+.env*
