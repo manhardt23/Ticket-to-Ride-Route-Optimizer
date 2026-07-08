@@ -120,26 +120,37 @@ def solve_best() -> SolveResponse:
     )
 
 
-_PUBLIC_DIR = Path(__file__).resolve().parent / "static_site"
-if not _PUBLIC_DIR.is_dir():
-    _PUBLIC_DIR = Path(__file__).resolve().parents[3] / "public"
+_ROOT = Path(__file__).resolve().parents[3]
+_PUBLIC_CANDIDATES = (
+    _ROOT / "api" / "static",
+    _ROOT / "public",
+    Path(__file__).resolve().parents[1] / "static_site",
+)
+
+
+def _public_dir() -> Path | None:
+    for candidate in _PUBLIC_CANDIDATES:
+        if (candidate / "index.html").is_file():
+            return candidate
+    return None
 
 
 def _register_static_frontend() -> None:
-    """Serve Next.js export from public/ when Vercel CDN does not (FastAPI framework mode)."""
-    if not _PUBLIC_DIR.is_dir():
+    """Serve Next.js export when static CDN routing is unavailable (FastAPI framework)."""
+    public_dir = _public_dir()
+    if public_dir is None:
         return
 
     @app.get("/", include_in_schema=False)
     def serve_root() -> FileResponse:
-        return FileResponse(_PUBLIC_DIR / "index.html")
+        return FileResponse(public_dir / "index.html")
 
     @app.get("/{full_path:path}", include_in_schema=False)
     def serve_static(full_path: str) -> FileResponse:
-        target = _PUBLIC_DIR / full_path
+        target = public_dir / full_path
         if target.is_file():
             return FileResponse(target)
-        return FileResponse(_PUBLIC_DIR / "index.html")
+        return FileResponse(public_dir / "index.html")
 
 
 _register_static_frontend()

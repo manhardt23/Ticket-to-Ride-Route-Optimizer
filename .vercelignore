@@ -1,5 +1,6 @@
 # Built on Vercel — do not upload stale local artifacts
 public
+api/static
 frontend/out
 frontend/.next
 frontend/node_modules
