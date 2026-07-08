@@ -74,5 +74,4 @@ Nashville Raleigh 4 3
 Nashville Atlanta 1 1
 Atlanta Raleigh 2 2
 Atlanta Charleston 2 2
-Raleigh Washington 2 2
 Raleigh Charleston 2 2
