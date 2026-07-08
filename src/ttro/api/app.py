@@ -3,7 +3,7 @@ from fastapi import FastAPI, HTTPException
 from ttro.db import BoardRepository
 from ttro.solver import Optimizer
 
-from .schemas import (
+from ttro.api.schemas import (
     City,
     RouteResult,
     SolveRequest,
