@@ -3,6 +3,7 @@ from itertools import combinations
 import networkx as nx
 
 from ttro.graph import Board
+from ttro.solver.pathchoice import best_simple_paths
 
 DEFAULT_SET_SIZE = 10
 POINT_PRUNE_THRESHOLD = 150
@@ -24,6 +25,13 @@ class RouteSet:
     ``claimed`` and pre-counted toward ``trains_used``. ``blocked`` edges
     (opponent's) are removed from the working graph entirely, so pathfinding
     can never traverse them.
+
+    ``rank="points"`` picks the simple path with the most new route points,
+    then the fewest new trains, that still fits in the remaining train budget.
+    ``rank="edges"`` is the previous rule: fewest new edges, then fewest new
+    trains, then most route points. ``ties`` records points-rank cases where
+    another path matched the winning points and train cost; the first path
+    is the one that was kept.
     """
 
     def __init__(
@@ -32,6 +40,8 @@ class RouteSet:
         *,
         blocked: set[frozenset] | None = None,
         pre_claimed: set[frozenset] | None = None,
+        rank: str = "points",
+        cache: dict | None = None,
     ):
         self.blocked = blocked or set()
         if self.blocked:
@@ -46,6 +56,12 @@ class RouteSet:
         self.claimed: set[frozenset] = set(pre_claimed or set())
         self.mandatory: set[frozenset] = set(self.claimed)
         self.used_edges: set[frozenset] = set()
+
+        if rank not in ("points", "edges"):
+            raise ValueError(f"unknown rank: {rank}")
+        self.rank = rank
+        self._cache = cache
+        self.ties: list[dict] = []
 
         self.trains_used = 0
         for edge in self.claimed:
@@ -68,21 +84,41 @@ class RouteSet:
     def add_trip(self, trip) -> tuple[int, list[str]] | None:
         """Claim the best route for a trip. Returns (new_points, path) or None.
 
-        None means the trip is unreachable. The route minimizes newly placed track;
-        among ties it spends the fewest new trains, then scores the most points.
+        None means no simple path connects the ticket within the trains still
+        left (45 minus trains already placed). ``rank="points"`` maximizes new
+        route points, then minimizes new trains. An equal key keeps the first
+        path and is appended to ``ties``. ``rank="edges"`` keeps the old
+        fewest-new-edges order and does not apply the budget filter.
         """
         start, end = trip[0], trip[1]
         if start == end or not nx.has_path(self.G, start, end):
             return None
 
-        best_path: list[str] = []
-        best_key = None
-        for path in nx.all_shortest_paths(self.G, start, end, weight=self._distance):
-            trains, points = self._new_track(path)
-            key = (trains, -points)
-            if best_key is None or key < best_key:
-                best_key = key
-                best_path = path
+        if self.rank == "edges":
+            best_path = self._fewest_new_edges(start, end)
+        else:
+            budget = TOTAL_TRAINS - self.trains_used
+            if budget < 0:
+                budget = 0
+            prior_claims = len(self.claimed)
+            chosen, tied = best_simple_paths(
+                self.G, start, end, budget, claimed=self.claimed, cache=self._cache
+            )
+            if chosen is None:
+                return None
+            best_path = chosen
+            if len(tied) > 1:
+                trains, points = self._new_track(best_path)
+                self.ties.append(
+                    {
+                        "start": start,
+                        "end": end,
+                        "points": points,
+                        "trains": trains,
+                        "prior_claims": prior_claims,
+                        "paths": [list(path) for path in tied],
+                    }
+                )
 
         new_trains = 0
         new_points = 0
@@ -96,6 +132,27 @@ class RouteSet:
         self.trains_used += new_trains
         return new_points, best_path
 
+    def _fewest_new_edges(self, start: str, end: str) -> list[str]:
+        """Old within-ticket rule: fewest new edges, then trains, then points."""
+        key = None
+        if self._cache is not None:
+            key = ("edges", id(self.G), start, end, frozenset(self.claimed))
+            hit = self._cache.get(key)
+            if hit is not None:
+                return hit
+
+        best_path: list[str] = []
+        best_key = None
+        for path in nx.all_shortest_paths(self.G, start, end, weight=self._distance):
+            trains, points = self._new_track(path)
+            rank_key = (trains, -points)
+            if best_key is None or rank_key < best_key:
+                best_key = rank_key
+                best_path = path
+        if key is not None:
+            self._cache[key] = best_path
+        return best_path
+
 
 class Optimizer:
     """Combinatorial search for the highest-scoring set of destination tickets."""
@@ -103,13 +160,17 @@ class Optimizer:
     def __init__(self):
         self.graph = Board.build_graph()
 
-    def evaluate_set(self, trip_list) -> tuple[int, list[list[str]]]:
+    def evaluate_set(
+        self, trip_list, *, rank: str = "points", cache: dict | None = None
+    ) -> tuple[int, list[list[str]]]:
         """Route a fixed set of trips, sharing claimed track between them.
 
         Returns the total score (ticket points + placed-train points) and one real
         city-chain path per trip. Returns ``(0, [])`` if the set exceeds 45 trains.
+        ``cache`` reuses path searches across sets; it does not change which path
+        is chosen.
         """
-        routes = RouteSet(self.graph)
+        routes = RouteSet(self.graph, rank=rank, cache=cache)
         total = 0
         paths: list[list[str]] = []
 
@@ -176,11 +237,12 @@ class Optimizer:
         best_score = 0
         best_paths: list[list[str]] = []
         best_trips: list = []
+        cache: dict = {}
 
         for combo in combinations(trips, set_size):
             if sum(t[2] for t in combo) < POINT_PRUNE_THRESHOLD:
                 continue
-            score, paths = self.evaluate_set(combo)
+            score, paths = self.evaluate_set(combo, cache=cache)
             if score > best_score:
                 best_score = score
                 best_paths = paths
